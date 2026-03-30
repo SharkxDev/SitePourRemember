@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ROBLOX KB — Ma Base de Connaissance</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<!-- PLANET BG -->
+<canvas id="planet-canvas"></canvas>
+
+<!-- APP -->
+<div id="app">
+
+  <!-- ── SIDEBAR ─────────────────────────────────────────────── -->
+  <div id="sidebar">
+    <div class="logo-area">
+      <div class="logo-title">ROBLOX · KB</div>
+      <div class="logo-sub">MA BASE DE CONNAISSANCE</div>
+    </div>
+
+    <div class="sidebar-search">
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" id="search-input" placeholder="Rechercher..." oninput="handleSearch(this.value)">
+      </div>
+    </div>
+
+    <div class="sidebar-actions">
+      <button class="btn primary full" onclick="openNewCatModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        NOUVELLE CATÉGORIE
+      </button>
+    </div>
+
+    <div class="cat-list-header">CATÉGORIES</div>
+    <div class="cat-list" id="cat-list">
+      <div class="loading"><div class="spin"></div></div>
+    </div>
+
+    <div class="sidebar-stats">
+      <div class="stat-box">
+        <div class="stat-num" id="stat-cats">0</div>
+        <div class="stat-label">CATÉGORIES</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="stat-total">0</div>
+        <div class="stat-label">TOTAL</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="stat-scripts">0</div>
+        <div class="stat-label">SCRIPTS</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="stat-examples">0</div>
+        <div class="stat-label">EXEMPLES</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MAIN ────────────────────────────────────────────────── -->
+  <div id="main">
+    <!-- TOPBAR -->
+    <div id="topbar">
+      <div class="topbar-title" id="topbar-title">BIENVENUE</div>
+      <div class="topbar-right">
+        <button class="btn primary" onclick="newEntry()" id="btn-new-entry" style="display:none">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          NOUVELLE ENTRÉE
+        </button>
+      </div>
+    </div>
+
+    <!-- FILTER PILLS -->
+    <div class="filter-pills">
+      <button class="pill active-all" data-filter="all" onclick="setFilter('all')">TOUT</button>
+      <button class="pill" data-filter="note" onclick="setFilter('note')">📝 NOTES</button>
+      <button class="pill" data-filter="script" onclick="setFilter('script')">💻 SCRIPTS</button>
+      <button class="pill" data-filter="example" onclick="setFilter('example')">🔬 EXEMPLES</button>
+    </div>
+
+    <!-- CONTENT -->
+    <div id="content">
+
+      <!-- WELCOME -->
+      <div id="welcome-screen" style="display:flex;height:100%">
+        <div style="margin:auto;text-align:center">
+          <div class="welcome-icon">🎮</div>
+          <div class="welcome-title">ROBLOX KNOWLEDGE BASE</div>
+          <div class="welcome-sub" style="margin-top:8px">Sélectionne ou crée une catégorie pour commencer</div>
+        </div>
+      </div>
+
+      <!-- ENTRIES GRID -->
+      <div id="entries-grid" style="display:none"></div>
+
+      <!-- EDITOR PANEL -->
+      <div id="editor-panel" style="display:none">
+
+        <!-- Editor topbar -->
+        <div class="editor-header">
+          <input type="text" class="editor-title-input" id="editor-title-input" placeholder="Titre de l'entrée...">
+          <button class="btn success" onclick="saveEntry()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+              <polyline points="17,21 17,13 7,13 7,21"/>
+              <polyline points="7,3 7,8 15,8"/>
+            </svg>
+            SAUVEGARDER
+          </button>
+          <button class="btn" onclick="backToList()">← RETOUR</button>
+        </div>
+
+        <!-- Editor body -->
+        <div class="editor-body">
+
+          <!-- Type selector -->
+          <div class="form-group">
+            <div class="form-label">TYPE D'ENTRÉE</div>
+            <div class="type-selector">
+              <button class="type-option selected-note" data-type="note" onclick="setEditorType('note')">📝 NOTE</button>
+              <button class="type-option" data-type="script" onclick="setEditorType('script')">💻 SCRIPT</button>
+              <button class="type-option" data-type="example" onclick="setEditorType('example')">🔬 EXEMPLE</button>
+            </div>
+            <input type="hidden" id="editor-type-hidden" value="note">
+          </div>
+
+          <!-- Note / explication -->
+          <div class="form-group">
+            <div class="form-label">NOTE / EXPLICATION</div>
+            <textarea class="form-textarea" id="editor-note" rows="5"
+              placeholder="Explique ce que tu as appris, comment ça marche, dans quel contexte tu l'utilises...&#10;&#10;Ex: Ce script gère la santé du joueur côté serveur. Il faut le mettre dans ServerScriptService et s'assurer que RemoteEvents est dans ReplicatedStorage."></textarea>
+          </div>
+
+          <!-- Code section (shown for script/example) -->
+          <div id="code-section" style="display:none">
+            <div class="section-divider">CODE</div>
+            <div class="form-group" style="margin-top:16px">
+              <div class="form-label">SCRIPT LUA / LUAU</div>
+              <textarea class="form-textarea code-textarea" id="editor-code" rows="12"
+                placeholder="-- Colle ton script ici&#10;local Players = game:GetService('Players')&#10;&#10;Players.PlayerAdded:Connect(function(player)&#10;    print('Joueur connecté:', player.Name)&#10;end)"></textarea>
+            </div>
+          </div>
+
+          <!-- Location section -->
+          <div id="location-section" style="display:none">
+            <div class="section-divider">EMPLACEMENT ROBLOX STUDIO</div>
+            <div class="form-group" style="margin-top:16px">
+              <div class="form-label">OÙ SE TROUVE CE SCRIPT ?</div>
+              <div class="location-chips" id="location-chips">
+                <div class="loc-chip" data-loc="ServerScriptService" onclick="pickLocation(this)">ServerScriptService</div>
+                <div class="loc-chip" data-loc="ReplicatedStorage" onclick="pickLocation(this)">ReplicatedStorage</div>
+                <div class="loc-chip" data-loc="ReplicatedFirst" onclick="pickLocation(this)">ReplicatedFirst</div>
+                <div class="loc-chip" data-loc="StarterGui" onclick="pickLocation(this)">StarterGui</div>
+                <div class="loc-chip" data-loc="StarterPlayer" onclick="pickLocation(this)">StarterPlayer</div>
+                <div class="loc-chip" data-loc="StarterPack" onclick="pickLocation(this)">StarterPack</div>
+                <div class="loc-chip" data-loc="Workspace" onclick="pickLocation(this)">Workspace</div>
+                <div class="loc-chip" data-loc="ServerStorage" onclick="pickLocation(this)">ServerStorage</div>
+                <div class="loc-chip" data-loc="MaterialService" onclick="pickLocation(this)">MaterialService</div>
+                <div class="loc-chip" data-loc="Teams" onclick="pickLocation(this)">Teams</div>
+              </div>
+              <input type="text" class="form-input" id="editor-loc-input"
+                placeholder="Ou tape manuellement..." style="margin-top:8px">
+            </div>
+            <div class="form-row" style="margin-top:12px">
+              <div class="form-group">
+                <div class="form-label">TYPE DE SCRIPT</div>
+                <select class="form-select" id="editor-script-type">
+                  <option value="">-- Choisir --</option>
+                  <option value="Script">Script</option>
+                  <option value="LocalScript">LocalScript</option>
+                  <option value="ModuleScript">ModuleScript</option>
+                  <option value="BindableEvent">BindableEvent</option>
+                  <option value="RemoteEvent">RemoteEvent</option>
+                  <option value="RemoteFunction">RemoteFunction</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <div class="form-label">TAGS (séparés par virgules)</div>
+                <input type="text" class="form-input" id="editor-tags"
+                  placeholder="ex: santé, joueur, serveur">
+              </div>
+            </div>
+          </div>
+
+          <!-- Tags (always visible for notes) -->
+          <div class="form-group" id="tags-note-group">
+            <div class="form-label">TAGS</div>
+            <input type="text" class="form-input" id="editor-tags"
+              placeholder="ex: ui, animation, basique" style="display:none">
+          </div>
+
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ── MODAL CATEGORIE ────────────────────────────────────────── -->
+<div class="modal-overlay" id="modal-cat">
+  <div class="modal">
+    <div class="modal-title" id="modal-cat-title">NOUVELLE CATÉGORIE</div>
+    <div class="form-group" style="margin-bottom:16px">
+      <div class="form-label">NOM</div>
+      <input type="text" class="form-input" id="cat-name-input"
+        placeholder="ex: Systèmes de physique" maxlength="50"
+        onkeydown="if(event.key==='Enter')saveCategory()">
+    </div>
+    <div class="form-group" style="margin-bottom:16px">
+      <div class="form-label">DESCRIPTION COURTE</div>
+      <input type="text" class="form-input" id="cat-desc-input"
+        placeholder="ex: Tout ce que j'ai appris sur les mouvements">
+    </div>
+    <div class="form-group" style="margin-bottom:16px">
+      <div class="form-label">COULEUR</div>
+      <div class="color-row" id="color-row"></div>
+    </div>
+    <div class="form-group">
+      <div class="form-label">ICÔNE</div>
+      <div class="color-row" id="icon-row"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModals()">ANNULER</button>
+      <button class="btn primary" onclick="saveCategory()">CRÉER</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script src="/js/planet.js"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>
